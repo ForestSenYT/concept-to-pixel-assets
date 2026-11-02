@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="__LANG__">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root{
+  --bg:#17181c; --panel:#202228; --panel2:#272a31; --line:#343842; --text:#e8e6e1; --dim:#9a9ca3; --accent:#e7b75f; --accent2:#7fb3a8;
+  --stage-dark:#3c404a; --stage-light:#d8d4cb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+header{display:flex;align-items:baseline;gap:12px;padding:14px 16px 6px;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;font-weight:650;letter-spacing:.2px}
+header .sub{color:var(--dim);font-size:12.5px}
+.tabs{display:flex;gap:6px;padding:6px 16px 10px;flex-wrap:wrap}
+.tab{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13.5px}
+.tab.on{background:var(--accent);color:#1b1b1b;border-color:var(--accent);font-weight:600}
+main{display:grid;grid-template-columns:250px 1fr;gap:12px;padding:0 16px 16px}
+@media (max-width:760px){main{grid-template-columns:1fr}}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;max-height:calc(100vh - 120px);overflow:auto}
+@media (max-width:760px){.side{max-height:260px}}
+.grp{color:var(--dim);font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;margin:10px 4px 4px}
+.grp:first-child{margin-top:2px}
+.item{display:flex;justify-content:space-between;gap:6px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:13px}
+.item:hover{background:var(--panel2)}
+.item.on{background:#3a3220;color:var(--accent)}
+.item .meta{color:var(--dim);font-size:11.5px;white-space:nowrap}
+.stagewrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.stage{display:flex;justify-content:center;align-items:flex-end;border-radius:8px;overflow:hidden;min-height:200px}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;max-width:100%}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:6px 11px;border-radius:7px;cursor:pointer;font-size:13px}
+.btn:hover{border-color:#4a505c}
+.btn.on{border-color:var(--accent);color:var(--accent)}
+.btn.big{padding:8px 16px;font-weight:600}
+.btn:disabled{opacity:.35;cursor:default}
+.sep{width:1px;height:22px;background:var(--line);margin:0 2px}
+.lbl{color:var(--dim);font-size:12px}
+.info{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--dim)}
+.info b{color:var(--text);font-weight:600}
+.note{color:var(--accent2)}
+.strip{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px}
+.strip canvas{border:2px solid transparent;border-radius:4px;cursor:pointer;flex:0 0 auto}
+.strip canvas.on{border-color:var(--accent)}
+.exprs{display:flex;flex-wrap:wrap;gap:6px}
+.hint{color:var(--dim);font-size:12.5px}
+.queue{color:var(--dim);font-size:12px;min-height:18px}
+kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:11.5px}
+</style>
+</head>
+<body>
+</head>
+<body>
+<header><h1 id="h1"></h1><span class="sub" id="sub"></span></header>
+<div class="tabs">
+  <button class="tab on" data-mode="clips" id="tab_clips"></button>
+  <button class="tab" data-mode="expr" id="tab_expr"></button>
+</div>
+<main>
+  <aside class="side" id="side"></aside>
+  <section class="stagewrap">
+    <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+    <div class="controls" id="ctl">
+      <button class="btn big" id="play"></button>
+      <button class="btn" id="prev"></button>
+      <button class="btn" id="next"></button>
+      <span class="sep"></span>
+      <span class="lbl" id="l_speed"></span>
+      <button class="btn spd" data-s="0.25">¼</button><button class="btn spd" data-s="0.5">½</button><button class="btn spd on" data-s="1">1×</button><button class="btn spd" data-s="2">2×</button>
+      <span class="sep"></span>
+      <span class="lbl" id="l_zoom"></span>
+      <button class="btn zm" data-z="2">2×</button><button class="btn zm on" data-z="3">3×</button><button class="btn zm" data-z="4">4×</button><button class="btn zm" data-z="6" data-face="1" id="zface"></button>
+      <span class="sep"></span>
+      <span class="lbl" id="l_bg"></span>
+      <button class="btn bgc on" data-b="dark" id="bg_dark"></button><button class="btn bgc" data-b="light" id="bg_light"></button><button class="btn bgc" data-b="check" id="bg_check"></button>
+    </div>
+    <div id="modeExtra"></div>
+    <div class="info" id="info"></div>
+    <div class="strip" id="strip"></div>
+  </section>
+</main>
+<script>
+const CLIPS=/*__DATA__*/null;
+const CFG=/*__CFG__*/null;
+const I18N={
+ zh:{sub:'1x 像素 · 每帧 __W__×__H__ · 按 json 里的真实时长播放',clips:'逐段看动画',expr:'表情 / 说话',play:'⏸ 暂停',paused:'▶ 播放',prev:'◀ 上一帧',next:'下一帧 ▶',speed:'速度',zoom:'放大',face:'脸 6×',bg:'底色',dark:'深',light:'浅',check:'格子',
+     g_idle:'待机 Idle',g_talk:'说话 Talk',g_perf:'表演',g_to:'切到表情 To_',g_from:'切回平静 From_',g_other:'其他',frames:'帧',loop:'循环',once:'一次性（播完停在最后一帧，稍后重播）',frame:'帧',
+     howto:'怎么用',howto_expr:'点表情按钮：按包里真实的切换动画走（先 From_ 回平静，再 To_ 到新表情，然后进入该表情的 Idle）。打开"说话"就换成对应的 Talk_ 循环。表演按钮会先自动切到它需要的起始表情。',
+     now:'当前',expr_now:'表情',playing:'正在播',next_up:'接着',talk_off:'💬 说话：关',talk_on:'💬 说话：开'},
+ en:{sub:'1x pixels · __W__×__H__ per frame · real per-frame durations from the json',clips:'Clips',expr:'Expressions / talk',play:'⏸ Pause',paused:'▶ Play',prev:'◀ Prev',next:'Next ▶',speed:'Speed',zoom:'Zoom',face:'Face 6×',bg:'Background',dark:'Dark',light:'Light',check:'Checker',
+     g_idle:'Idle',g_talk:'Talk',g_perf:'Performances',g_to:'To_ expression',g_from:'From_ expression',g_other:'Other',frames:'f',loop:'loop',once:'one-shot (holds the last frame, then replays)',frame:'Frame',
+     howto:'How to use',howto_expr:'Click an expression: the real transition clips play (From_ back to neutral, then To_ the new one, then its Idle). Turn talking on to switch to its Talk_ loop. Performance buttons first switch to the expression they start from.',
+     now:'Now',expr_now:'Expression',playing:'Playing',next_up:'Then',talk_off:'💬 Talk: off',talk_on:'💬 Talk: on'}};
+const T=I18N[CFG.lang]||I18N.en;
+const W=CFG.w,H=CFG.h,NEU=CFG.neutral;
+const tr=s=>s.replace('__W__',W).replace('__H__',H);
+document.getElementById('h1').textContent=CFG.title; document.getElementById('sub').textContent=tr(T.sub);
+[['tab_clips','clips'],['tab_expr','expr'],['prev','prev'],['next','next'],['l_speed','speed'],['l_zoom','zoom'],['zface','face'],['l_bg','bg'],['bg_dark','dark'],['bg_light','light'],['bg_check','check']].forEach(([i,k])=>document.getElementById(i).textContent=T[k]);
+const imgs={}; let loaded=0; const names=Object.keys(CLIPS);
+names.forEach(n=>{const im=new Image(); im.onload=()=>{loaded++; if(loaded===names.length) start();}; im.src='data:image/png;base64,'+CLIPS[n].img; imgs[n]=im;});
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const S={mode:'clips',clip:'Idle_'+NEU,frame:0,t:0,playing:true,speed:1,zoom:3,bg:'dark',face:false};
+const PERF=CFG.perform.map(p=>p.name);
+const GROUPS=[[T.g_idle,n=>n.startsWith('Idle_')],[T.g_talk,n=>n.startsWith('Talk_')],[T.g_perf,n=>PERF.includes(n)],[T.g_to,n=>n.startsWith('To_')],[T.g_from,n=>n.startsWith('From_')],
+ [T.g_other,n=>!/^(Idle_|Talk_|To_|From_)/.test(n)&&!PERF.includes(n)]];
+const total=n=>CLIPS[n].ms.reduce((a,b)=>a+b,0);
+function bgFill(c,w,h){
+  if(S.bg==='check'){const s=8*S.zoom/2;for(let y=0;y<h;y+=s)for(let x=0;x<w;x+=s){c.fillStyle=((x/s+y/s)%2)?'#c9c9c9':'#e9e9e9';c.fillRect(x,y,s,s);} }
+  else{c.fillStyle=getComputedStyle(document.documentElement).getPropertyValue(S.bg==='light'?'--stage-light':'--stage-dark');c.fillRect(0,0,w,h);}
+}
+function drawFrame(c,clip,i,x,y,z,crop){
+  const im=imgs[clip]; c.imageSmoothingEnabled=false; const [sx,sy,sw,sh]=crop||[0,0,W,H];
+  c.drawImage(im,i*W+sx,sy,sw,sh,x,y,sw*z,sh*z);
+}
+const side=document.getElementById('side');
+function buildSide(){
+  side.innerHTML='';
+  if(S.mode==='clips'){
+    GROUPS.forEach(([g,f])=>{
+      const list=names.filter(f); if(!list.length) return;
+      const h=document.createElement('div'); h.className='grp'; h.textContent=g; side.appendChild(h);
+      list.forEach(n=>{const d=document.createElement('div'); d.className='item'+(n===S.clip?' on':''); d.innerHTML=`<span>${n}</span><span class="meta">${CLIPS[n].n}${T.frames} · ${(total(n)/1000).toFixed(2)}s${CLIPS[n].loop?' · '+T.loop:''}</span>`; d.onclick=()=>{setClip(n);buildSide();}; side.appendChild(d);});
+    });
+  } else {
+    side.innerHTML=`<div class="grp">${T.howto}</div><div class="hint" style="padding:0 4px">${T.howto_expr}</div><div class="grp">${T.now}</div><div class="hint" style="padding:0 4px" id="exprNow"></div>`;
+  }
+}
+function setClip(n){S.clip=n;S.frame=0;S.t=0;buildStrip();}
+const strip=document.getElementById('strip');
+function buildStrip(){
+  strip.innerHTML=''; if(S.mode!=='clips') return;
+  const c=CLIPS[S.clip];
+  for(let i=0;i<c.n;i++){
+    const t=document.createElement('canvas'); const crop=CFG.face_crop; const z=2;
+    t.width=crop[2]*z; t.height=crop[3]*z; const tc=t.getContext('2d'); tc.fillStyle='#3c404a'; tc.fillRect(0,0,t.width,t.height);
+    drawFrame(tc,S.clip,i,0,0,z,crop); t.title=`${i} · ${c.ms[i]}ms · ${c.notes[i]}`;
+    t.onclick=()=>{S.frame=i;S.t=0;S.playing=false;updPlay();};
+    strip.appendChild(t);
+  }
+}
+const X={cur:NEU,talk:false,queue:[],playing:null,f:0,t:0};
+function exprClipFor(e){return (X.talk && CLIPS['Talk_'+e])?'Talk_'+e:'Idle_'+e;}
+function routeTo(target){const q=[]; if(X.cur!==target){ if(X.cur!==NEU && CLIPS['From_'+X.cur]) q.push('From_'+X.cur); if(target!==NEU && CLIPS['To_'+target]) q.push('To_'+target);} return q;}
+function exprGo(target){X.queue=routeTo(target); X.cur=target; X.playing=null; nextExpr();}
+function exprPerform(name){
+  const P=CFG.perform.find(p=>p.name===name); const need=P.need||NEU; const end=P.end||need;
+  X.queue=routeTo(need).concat([name]); for(let i=1;i<(P.repeat||1);i++) X.queue.push(name);
+  X.cur=end; X.playing=null; nextExpr();
+}
+function nextExpr(){ X.playing=X.queue.length?X.queue.shift():exprClipFor(X.cur); X.f=0;X.t=0; updExprUI(); }
+function updExprUI(){
+  const el=document.getElementById('exprNow'); if(el) el.innerHTML=`${T.expr_now}: <b style="color:var(--text)">${CFG.expr[X.cur]||X.cur}</b><br>${T.playing}: ${X.playing}${X.queue.length?'<br>'+T.next_up+': '+X.queue.join(' → '):''}`;
+  document.querySelectorAll('.ebtn').forEach(b=>b.classList.toggle('on',b.dataset.e===X.cur));
+}
+const modeExtra=document.getElementById('modeExtra');
+function buildExtra(){
+  if(S.mode==='expr'){
+    const ex=Object.keys(CFG.expr).filter(e=>CLIPS['Idle_'+e]).map(e=>`<button class="btn ebtn" data-e="${e}">${CFG.expr[e]}</button>`).join('');
+    const pf=CFG.perform.filter(p=>CLIPS[p.name]).map(p=>`<button class="btn perf" data-p="${p.name}">${p.label||p.name}</button>`).join('');
+    modeExtra.innerHTML=`<div class="exprs">${ex}</div><div class="controls" style="margin-top:8px"><button class="btn" id="talk">${T.talk_off}</button><span class="sep"></span>${pf}</div>`;
+    modeExtra.querySelectorAll('.ebtn').forEach(b=>b.onclick=()=>exprGo(b.dataset.e));
+    modeExtra.querySelectorAll('.perf').forEach(b=>b.onclick=()=>exprPerform(b.dataset.p));
+    const tb=document.getElementById('talk'); tb.onclick=()=>{X.talk=!X.talk; tb.textContent=X.talk?T.talk_on:T.talk_off; tb.classList.toggle('on',X.talk); if(!X.queue.length && X.playing && (X.playing.startsWith('Idle_')||X.playing.startsWith('Talk_'))){X.playing=exprClipFor(X.cur);X.f=0;X.t=0;updExprUI();}};
+    updExprUI();
+  } else modeExtra.innerHTML='';
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');S.mode=t.dataset.mode;
+  if(S.mode==='expr'){X.cur=NEU;X.queue=[];X.playing='Idle_'+NEU;X.f=0;X.t=0;}
+  S.playing=true; updPlay(); buildSide(); buildExtra(); buildStrip(); ['prev','next'].forEach(i=>document.getElementById(i).disabled=S.mode!=='clips');});
+const playBtn=document.getElementById('play');
+function updPlay(){playBtn.textContent=S.playing?T.play:T.paused;}
+playBtn.onclick=()=>{S.playing=!S.playing;updPlay();};
+document.getElementById('prev').onclick=()=>{const c=CLIPS[S.clip];S.frame=(S.frame-1+c.n)%c.n;S.t=0;S.playing=false;updPlay();};
+document.getElementById('next').onclick=()=>{const c=CLIPS[S.clip];S.frame=(S.frame+1)%c.n;S.t=0;S.playing=false;updPlay();};
+document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{document.querySelectorAll('.spd').forEach(x=>x.classList.remove('on'));b.classList.add('on');S.speed=+b.dataset.s;});
+document.querySelectorAll('.zm').forEach(b=>b.onclick=()=>{document.querySelectorAll('.zm').forEach(x=>x.classList.remove('on'));b.classList.add('on');S.zoom=+b.dataset.z;S.face=!!b.dataset.face;});
+document.querySelectorAll('.bgc').forEach(b=>b.onclick=()=>{document.querySelectorAll('.bgc').forEach(x=>x.classList.remove('on'));b.classList.add('on');S.bg=b.dataset.b;});
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault(); S.playing=!S.playing; updPlay();}
+  if(S.mode==='clips'&&e.key==='ArrowRight') document.getElementById('next').click();
+  if(S.mode==='clips'&&e.key==='ArrowLeft') document.getElementById('prev').click();
+});
+const info=document.getElementById('info');
+let last=performance.now();
+function tick(now){
+  const dt=Math.min(100,now-last)*S.speed; last=now; const z=S.zoom;
+  const crop=S.face?CFG.face_crop:null; const cw=crop?crop[2]:W, chh=crop?crop[3]:H;
+  if(S.mode==='clips'){
+    const c=CLIPS[S.clip];
+    if(S.playing){S.t+=dt; while(S.t>=c.ms[S.frame]){S.t-=c.ms[S.frame]; if(S.frame===c.n-1 && !c.loop){S.t=0; S.hold=(S.hold||0)+1; if(S.hold>12){S.frame=0;S.hold=0;} break;} S.frame=(S.frame+1)%c.n;}}
+    cv.width=cw*z; cv.height=chh*z; bgFill(ctx,cv.width,cv.height); drawFrame(ctx,S.clip,S.frame,0,0,z,crop);
+    info.innerHTML=`<span><b>${S.clip}</b></span><span>${T.frame} <b>${S.frame}</b> (0–${c.n-1})</span><span><b>${c.ms[S.frame]}</b> ms</span><span>${c.loop?T.loop:T.once}</span><span class="note">${c.notes[S.frame]}</span>`;
+    strip.querySelectorAll('canvas').forEach((t,i)=>t.classList.toggle('on',i===S.frame));
+  } else {
+    const c=CLIPS[X.playing];
+    if(S.playing){X.t+=dt; while(X.t>=c.ms[X.f]){X.t-=c.ms[X.f]; if(X.f===c.n-1){ if(!c.loop || X.queue.length || X.playing!==exprClipFor(X.cur)){nextExpr(); break;} X.f=0;} else X.f++;}}
+    const cc=CLIPS[X.playing];
+    cv.width=cw*z; cv.height=chh*z; bgFill(ctx,cv.width,cv.height); drawFrame(ctx,X.playing,X.f,0,0,z,crop);
+    info.innerHTML=`<span><b>${X.playing}</b></span><span>${T.frame} <b>${X.f}</b> (0–${cc.n-1})</span><span><b>${cc.ms[X.f]}</b> ms</span><span class="note">${cc.notes[X.f]}</span>`;
+  }
+  requestAnimationFrame(tick);
+}
+function start(){updPlay();buildSide();buildExtra();buildStrip();requestAnimationFrame(tick);}
+</script>
+</body>
+</html>

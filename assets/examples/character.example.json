@@ -1,0 +1,645 @@
+{
+ "_doc": {
+  "character / version": "pack name hero_A_V01; bump the version for every delivery, never overwrite an old pack",
+  "base": "finished 1x neutral sprite (PNG or .npy), canvas shared by the whole cast",
+  "face_base": "the same sprite with eyes / mouth / brows painted over with skin (nose and blush stay) - drawn by hand once",
+  "chest_row": "rows above it lift 1 px on a breath; 'auto' or [lo, hi] picks the least visible row",
+  "head": "head block for nods / shakes: every opaque px up to max_row, plus extra_boxes [x0,y0,x1,y1] for hair locks / ponytail that hang lower",
+  "face.features": "each feature is a box at (x,y); every state is a grid of characters, '.' keeps the featureless face",
+  "face.only_on": "a colour symbol that may only be drawn over these base colours (lid shade only over skin, never over bangs)",
+  "face.blink / blink_kind / no_blink": "blink sequences per eye state; closed / smile arcs never blink",
+  "talk_map": "per expression, which mouth states replace the generic talk 'half' / 'open'",
+  "performances": "extra one-shot clips built from steps (expr, eyes, mouth, head [dx,dy], breath, ms, note); last step = the end state still",
+  "preview": "labels for the interactive preview buttons (user's language) and which performance buttons to show",
+  "face_box": "crop x0,y0,x1,y1 for face previews",
+  "normals.rules": "colour -> part (first match wins, optional region); unmatched = outline",
+  "normals.head": "parts that form the head sphere; above_part = the torso part where the head ends (follows breathing)",
+  "cast": "other characters' front sprites for the scale check image",
+  "unity": "C# class prefix, Tools menu name, pixels per unit"
+ },
+ "character": "hero_A",
+ "version": "V01",
+ "lang": "zh",
+ "base": "work/H_base.png",
+ "face_base": "work/H_face_base.png",
+ "out": "out",
+ "chest_row": 55,
+ "head": {
+  "max_row": 32,
+  "extra_boxes": [
+   [
+    0,
+    33,
+    41,
+    35
+   ],
+   [
+    53,
+    33,
+    96,
+    35
+   ]
+  ]
+ },
+ "neutral": "H01_Neutral",
+ "face": {
+  "colors": {
+   "K": [
+    21,
+    4,
+    3
+   ],
+   "t": [
+    232,
+    156,
+    120
+   ],
+   "m": [
+    204,
+    128,
+    98
+   ],
+   "L": [
+    150,
+    88,
+    72
+   ],
+   "S": [
+    250,
+    182,
+    143
+   ]
+  },
+  "only_on": {
+   "t": [
+    [
+     250,
+     182,
+     143
+    ],
+    [
+     232,
+     156,
+     120
+    ]
+   ]
+  },
+  "features": {
+   "eyeL": {
+    "x": 41,
+    "y": 22,
+    "states": {
+     "open": [
+      "....",
+      "KKKK",
+      "..K.",
+      "..K.",
+      "...."
+     ],
+     "half": [
+      "....",
+      "tttt",
+      "KKKK",
+      "..K.",
+      "...."
+     ],
+     "closed": [
+      "....",
+      "tttt",
+      "KKKK",
+      "....",
+      "...."
+     ],
+     "wide": [
+      "KKKK",
+      "....",
+      "..K.",
+      "..K.",
+      "...."
+     ],
+     "smile": [
+      "....",
+      ".KK.",
+      "K..K",
+      "....",
+      "...."
+     ],
+     "narrow": [
+      "....",
+      "tttt",
+      "KKKK",
+      "t.Kt",
+      "...."
+     ],
+     "worried": [
+      "...K",
+      "KKK.",
+      "..K.",
+      "..K.",
+      "...."
+     ],
+     "stern": [
+      "....",
+      "KKK.",
+      "..KK",
+      "..K.",
+      "...."
+     ],
+     "sad": [
+      "....",
+      "tttt",
+      ".KKK",
+      "K.K.",
+      "...."
+     ]
+    }
+   },
+   "eyeR": {
+    "x": 48,
+    "y": 22,
+    "mirror_of": "eyeL"
+   },
+   "mouth": {
+    "x": 44,
+    "y": 28,
+    "states": {
+     "neutral": [
+      "......",
+      "..mm..",
+      "......",
+      "......"
+     ],
+     "flat": [
+      "......",
+      ".LLLL.",
+      "......",
+      "......"
+     ],
+     "smile": [
+      ".L..L.",
+      "..LL..",
+      "......",
+      "......"
+     ],
+     "grin": [
+      "L....L",
+      ".LKKL.",
+      "..mm..",
+      "......"
+     ],
+     "down": [
+      "......",
+      "..LL..",
+      ".L..L.",
+      "......"
+     ],
+     "o": [
+      "..mm..",
+      "..KK..",
+      "..KK..",
+      "......"
+     ],
+     "half": [
+      "......",
+      "..KK..",
+      "......",
+      "......"
+     ],
+     "open": [
+      "......",
+      ".LKKL.",
+      "..KK..",
+      "......"
+     ],
+     "tight": [
+      "......",
+      ".mLLm.",
+      "......",
+      "......"
+     ],
+     "laugh": [
+      "L....L",
+      ".LKKL.",
+      "..KK..",
+      "......"
+     ],
+     "wobble": [
+      "......",
+      ".L.L..",
+      "..L.L.",
+      "......"
+     ]
+    }
+   },
+   "brows": {
+    "x": 44,
+    "y": 22,
+    "states": {
+     "none": [
+      "....."
+     ],
+     "knit": [
+      "m...m"
+     ],
+     "lift": [
+      "....."
+     ]
+    }
+   }
+  },
+  "expressions": {
+   "H01_Neutral": {
+    "brows": "none",
+    "eyeL": "open",
+    "eyeR": "open",
+    "mouth": "neutral"
+   },
+   "H02_Smile": {
+    "brows": "none",
+    "eyeL": "open",
+    "eyeR": "open",
+    "mouth": "smile"
+   },
+   "H03_Happy": {
+    "brows": "none",
+    "eyeL": "smile",
+    "eyeR": "smile",
+    "mouth": "grin"
+   },
+   "H04_Surprised": {
+    "brows": "none",
+    "eyeL": "wide",
+    "eyeR": "wide",
+    "mouth": "o"
+   },
+   "H05_Worried": {
+    "brows": "none",
+    "eyeL": "worried",
+    "eyeR": "worried",
+    "mouth": "wobble"
+   },
+   "H06_Frown": {
+    "brows": "knit",
+    "eyeL": "stern",
+    "eyeR": "stern",
+    "mouth": "down"
+   },
+   "H07_Suspicious": {
+    "brows": "none",
+    "eyeL": "open",
+    "eyeR": "narrow",
+    "mouth": "flat"
+   },
+   "H08_Cold": {
+    "brows": "none",
+    "eyeL": "half",
+    "eyeR": "half",
+    "mouth": "flat"
+   },
+   "H09_Sad": {
+    "brows": "none",
+    "eyeL": "sad",
+    "eyeR": "sad",
+    "mouth": "down"
+   },
+   "H10_EyesClosed": {
+    "brows": "none",
+    "eyeL": "closed",
+    "eyeR": "closed",
+    "mouth": "neutral"
+   }
+  },
+  "blink": {
+   "full": [
+    [
+     "half",
+     60
+    ],
+    [
+     "closed",
+     100
+    ],
+    [
+     "half",
+     60
+    ]
+   ],
+   "short": [
+    [
+     "closed",
+     120
+    ]
+   ]
+  },
+  "blink_kind": {
+   "open": "full",
+   "wide": "full",
+   "worried": "full",
+   "stern": "full"
+  },
+  "no_blink": [
+   "closed",
+   "smile"
+  ]
+ },
+ "talk_map": {
+  "H03_Happy": {
+   "half": "smile",
+   "open": "laugh"
+  }
+ },
+ "performances": {
+  "Smile_Grow": {
+   "state": "H03_Happy",
+   "steps": [
+    {
+     "expr": "H01_Neutral",
+     "ms": 160,
+     "note": "Neutral"
+    },
+    {
+     "expr": "H01_Neutral",
+     "mouth": "flat",
+     "ms": 120,
+     "note": "lips press"
+    },
+    {
+     "expr": "H02_Smile",
+     "ms": 200,
+     "note": "mouth corners rise"
+    },
+    {
+     "expr": "H02_Smile",
+     "mouth": "grin",
+     "ms": 140,
+     "note": "smile opens"
+    },
+    {
+     "expr": "H03_Happy",
+     "ms": 360,
+     "note": "eyes crease: Happy hold"
+    }
+   ]
+  }
+ },
+ "preview": {
+  "expr_labels": {
+   "Neutral": "平静",
+   "Smile": "微笑",
+   "Happy": "开心",
+   "Surprised": "吃惊",
+   "Worried": "担心",
+   "Frown": "皱眉",
+   "Suspicious": "怀疑",
+   "Cold": "冷淡",
+   "Sad": "难过",
+   "EyesClosed": "闭眼"
+  },
+  "performances": [
+   {
+    "name": "Smile_Grow",
+    "label": "慢慢笑开",
+    "need": "Neutral",
+    "end": "Happy"
+   },
+   {
+    "name": "Nod",
+    "label": "点头"
+   },
+   {
+    "name": "Nod_Slow",
+    "label": "慢点头"
+   },
+   {
+    "name": "HeadShake",
+    "label": "摇头"
+   }
+  ]
+ },
+ "face_box": [
+  28,
+  4,
+  68,
+  44
+ ],
+ "normals": {
+  "rules": [
+   {
+    "part": "hair",
+    "colors": [
+     [
+      64,
+      49,
+      46
+     ],
+     [
+      92,
+      65,
+      58
+     ],
+     [
+      118,
+      88,
+      76
+     ]
+    ],
+    "region": [
+     0,
+     0,
+     96,
+     36
+    ]
+   },
+   {
+    "part": "apron",
+    "colors": [
+     [
+      64,
+      49,
+      46
+     ],
+     [
+      92,
+      65,
+      58
+     ],
+     [
+      118,
+      88,
+      76
+     ]
+    ]
+   },
+   {
+    "part": "skin",
+    "colors": [
+     [
+      204,
+      128,
+      98
+     ],
+     [
+      232,
+      156,
+      120
+     ],
+     [
+      250,
+      182,
+      143
+     ],
+     [
+      253,
+      204,
+      172
+     ],
+     [
+      150,
+      88,
+      72
+     ]
+    ]
+   },
+   {
+    "part": "shoe",
+    "colors": [
+     [
+      143,
+      120,
+      113
+     ],
+     [
+      182,
+      158,
+      146
+     ],
+     [
+      222,
+      200,
+      186
+     ],
+     [
+      250,
+      229,
+      211
+     ],
+     [
+      206,
+      184,
+      170
+     ]
+    ],
+    "region": [
+     0,
+     140,
+     96,
+     160
+    ]
+   },
+   {
+    "part": "apron",
+    "colors": [
+     [
+      250,
+      229,
+      211
+     ],
+     [
+      222,
+      200,
+      186
+     ],
+     [
+      182,
+      158,
+      146
+     ],
+     [
+      143,
+      120,
+      113
+     ],
+     [
+      206,
+      184,
+      170
+     ]
+    ],
+    "region": [
+     47,
+     45,
+     59,
+     55
+    ]
+   },
+   {
+    "part": "shirt",
+    "colors": [
+     [
+      143,
+      120,
+      113
+     ],
+     [
+      182,
+      158,
+      146
+     ],
+     [
+      222,
+      200,
+      186
+     ],
+     [
+      250,
+      229,
+      211
+     ],
+     [
+      206,
+      184,
+      170
+     ]
+    ]
+   },
+   {
+    "part": "pants",
+    "colors": [
+     [
+      60,
+      47,
+      45
+     ],
+     [
+      82,
+      63,
+      59
+     ],
+     [
+      100,
+      78,
+      72
+     ]
+    ]
+   }
+  ],
+  "head": {
+   "parts": [
+    "hair",
+    "skin"
+   ],
+   "above_part": "shirt"
+  }
+ },
+ "cast": [
+  [
+   "girl_A",
+   "../girl_A_V01/views/GIRL_front.png"
+  ]
+ ],
+ "unity": {
+  "class": "HeroA",
+  "menu": "Hero A",
+  "ppu": 32
+ }
+}

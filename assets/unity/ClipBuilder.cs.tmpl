@@ -1,0 +1,82 @@
+// Optional helper (not run inside Unity while building this pack). Put this file in any Editor/ folder.
+// Usage: select one or more *_sheet.json files in the Project window ->
+//        Tools > __MENU__ > Build Clips From Selected Sheet JSON
+// It slices <Clip>_sheet.png into 96x160 sprites (point filter, no compression, pivot from json)
+// and writes <Clip>.anim next to it with the per-frame durations from the json (looping unless meta.loop=false).
+#if UNITY_EDITOR
+#pragma warning disable 0618
+using System.Collections.Generic;
+using System.IO;
+using UnityEditor;
+using UnityEngine;
+
+public static class __CLASS__ClipBuilder
+{
+    [System.Serializable] class Rect4 { public int x, y, w, h; }
+    [System.Serializable] class Frame { public string filename; public Rect4 frame; public int duration; }
+    [System.Serializable] class Size2 { public int w, h; }
+    [System.Serializable] class Meta { public string image; public Size2 size; public float[] pivot_normalized; public bool loop = true; }
+    [System.Serializable] class Atlas { public Frame[] frames; public Meta meta; }
+
+    [MenuItem("Tools/__MENU__/Build Clips From Selected Sheet JSON")]
+    static void Build()
+    {
+        foreach (var obj in Selection.objects)
+        {
+            var jsonPath = AssetDatabase.GetAssetPath(obj);
+            if (!jsonPath.EndsWith("_sheet.json")) continue;
+            var atlas = JsonUtility.FromJson<Atlas>(File.ReadAllText(jsonPath));
+            var dir = Path.GetDirectoryName(jsonPath).Replace('\\', '/');
+            var pngPath = dir + "/" + atlas.meta.image;
+            var clipName = Path.GetFileNameWithoutExtension(jsonPath).Replace("_sheet", "");
+            var pivot = new Vector2(atlas.meta.pivot_normalized[0], atlas.meta.pivot_normalized[1]);
+
+            var ti = (TextureImporter)AssetImporter.GetAtPath(pngPath);
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Multiple;
+            ti.filterMode = FilterMode.Point;
+            ti.textureCompression = TextureImporterCompression.Uncompressed;
+            ti.mipmapEnabled = false;
+            ti.maxTextureSize = 4096;   // widest sheet is 1056 px; keep it from being downscaled
+            ti.spritePixelsPerUnit = __PPU__;
+            var metas = new List<SpriteMetaData>();
+            foreach (var f in atlas.frames)
+                metas.Add(new SpriteMetaData
+                {
+                    name = f.filename,
+                    // json y is top-origin; Unity rect is bottom-origin
+                    rect = new Rect(f.frame.x, atlas.meta.size.h - f.frame.y - f.frame.h, f.frame.w, f.frame.h),
+                    alignment = (int)SpriteAlignment.Custom,
+                    pivot = pivot
+                });
+            ti.spritesheet = metas.ToArray();
+            ti.SaveAndReimport();
+
+            var sprites = new Dictionary<string, Sprite>();
+            foreach (var a in AssetDatabase.LoadAllAssetsAtPath(pngPath))
+                if (a is Sprite s) sprites[s.name] = s;
+
+            var clip = new AnimationClip { frameRate = 60 };
+            var keys = new List<ObjectReferenceKeyframe>();
+            float t = 0f;
+            for (int i = 0; i < atlas.frames.Length; i++)
+            {
+                var f = atlas.frames[i];
+                keys.Add(new ObjectReferenceKeyframe { time = t, value = sprites[f.filename] });
+                t += f.duration / 1000f;
+            }
+            // hold the last frame for its full duration before looping
+            keys.Add(new ObjectReferenceKeyframe { time = t - 1f / 60f, value = sprites[atlas.frames[atlas.frames.Length - 1].filename] });
+            var binding = EditorCurveBinding.PPtrCurve("", typeof(SpriteRenderer), "m_Sprite");
+            AnimationUtility.SetObjectReferenceCurve(clip, binding, keys.ToArray());
+            var settings = AnimationUtility.GetAnimationClipSettings(clip);
+            settings.loopTime = atlas.meta.loop;   // one-shot clips (To_*, From_*, Nod, ...) have loop=false in their json
+            AnimationUtility.SetAnimationClipSettings(clip, settings);
+            var clipPath = dir + "/" + clipName + ".anim";
+            AssetDatabase.CreateAsset(clip, clipPath);
+            Debug.Log($"[__CLASS__] {clipName}: {atlas.frames.Length} frames, {t:0.00}s -> {clipPath}");
+        }
+        AssetDatabase.SaveAssets();
+    }
+}
+#endif

@@ -1,0 +1,63 @@
+// Assigns the pixel-art normal maps of __CHAR__ as the "_NormalMap" secondary texture of every sprite sheet.
+// Put in any Editor/ folder. Run after "Build Clips From Selected Sheet JSON" (sheets must already be sliced).
+// Select the __CHAR__ folder in the Project window first, then
+// Tools > __MENU__ > Assign Normal Maps (selected folder)
+//   animations/<Clip>_sheet_n.png    -> secondary texture "_NormalMap" of animations/<Clip>_sheet.png (same atlas layout, pixel for pixel)
+//   normals/expressions/<Name>_n.png -> secondary texture of expressions/<Name>.png
+//   normals/views/<Name>_n.png       -> secondary texture of views/<Name>.png
+// Only textures inside the selected folder are touched (other character packs use the same clip names).
+// Normal maps are imported as Normal Map, Point filter, uncompressed, no mipmaps (compression/filtering would blur the bands).
+// In the scene: Light 2D -> enable "Normal Map" (Normal Map Quality = Accurate is best for pixel art; Distance ~ 1-3 units).
+#if UNITY_EDITOR
+using System.IO;
+using UnityEditor;
+using UnityEngine;
+
+public static class __CLASS__NormalMaps
+{
+    [MenuItem("Tools/__MENU__/Assign Normal Maps (selected folder)")]
+    static void AssignAll()
+    {
+        string folder = null;
+        foreach (var o in Selection.objects)
+        {
+            var p = AssetDatabase.GetAssetPath(o);
+            if (AssetDatabase.IsValidFolder(p)) { folder = p; break; }
+        }
+        if (folder == null) { Debug.LogWarning("[__CLASS__] Select the __CHAR__ folder in the Project window first."); return; }
+        int n = 0;
+        foreach (var guid in AssetDatabase.FindAssets("_n t:Texture2D", new[] { folder }))
+        {
+            var nPath = AssetDatabase.GUIDToAssetPath(guid).Replace('\\', '/');
+            var file = Path.GetFileNameWithoutExtension(nPath);
+            if (!file.EndsWith("_n")) continue;
+            string spritePath = null;
+            if (file.EndsWith("_sheet_n"))
+                spritePath = Path.GetDirectoryName(nPath).Replace('\\', '/') + "/" + file.Substring(0, file.Length - 2) + ".png";
+            else foreach (var sub in new[] { "expressions", "views" })
+            {
+                if (!nPath.Contains("/normals/" + sub + "/")) continue;
+                var root = nPath.Substring(0, nPath.IndexOf("/normals/" + sub + "/"));
+                spritePath = root + "/" + sub + "/" + file.Substring(0, file.Length - 2) + ".png";
+            }
+            if (spritePath == null || AssetImporter.GetAtPath(spritePath) == null) continue;
+
+            var ni = (TextureImporter)AssetImporter.GetAtPath(nPath);
+            ni.textureType = TextureImporterType.NormalMap;
+            ni.convertToNormalmap = false;
+            ni.filterMode = FilterMode.Point;
+            ni.textureCompression = TextureImporterCompression.Uncompressed;
+            ni.mipmapEnabled = false;
+            ni.maxTextureSize = 4096;
+            ni.SaveAndReimport();
+
+            var si = (TextureImporter)AssetImporter.GetAtPath(spritePath);
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(nPath);
+            si.secondarySpriteTextures = new[] { new SecondarySpriteTexture { name = "_NormalMap", texture = tex } };
+            si.SaveAndReimport();
+            n++;
+        }
+        Debug.Log($"[__CLASS__] normal maps assigned: {n}");
+    }
+}
+#endif

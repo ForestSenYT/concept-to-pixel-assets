@@ -1,0 +1,63 @@
+{
+ "out": "BG02_review.pdf",
+ "title": "BG02 湖面 · 评审稿",
+ "footer": "BG02 v1 评审稿",
+ "cover": {
+  "title": "BG02 湖面",
+  "subtitle": "v1 · 静帧 + 48 帧环境循环",
+  "lines": [
+   "规格：640×360 原生 / 1920×1080（3 倍最近邻），24 色",
+   "日期：2026-11-02"
+  ],
+  "image": "BG02.png"
+ },
+ "pages": [
+  {
+   "type": "text",
+   "title": "1  做法与修掉的 AI 痕迹",
+   "file": "README.md"
+  },
+  {
+   "type": "compare",
+   "title": "2  原图 → 成品",
+   "left": "src/BG02_concept.png",
+   "right": "BG02.png",
+   "llabel": "原图",
+   "rlabel": "成品"
+  },
+  {
+   "type": "detail",
+   "title": "2  局部：小船",
+   "src": "src/BG02_concept.png",
+   "out": "BG02.png",
+   "box": [
+    260,
+    200,
+    380,
+    260
+   ]
+  },
+  {
+   "type": "keyframes",
+   "title": "3  loop 关键帧",
+   "sub": "48 帧 / 12 fps / 4 秒无缝",
+   "frames": [
+    "loops/BG02/frames_native/BG02_LOOP_0000.png",
+    "loops/BG02/frames_native/BG02_LOOP_0012.png",
+    "loops/BG02/frames_native/BG02_LOOP_0024.png",
+    "loops/BG02/frames_native/BG02_LOOP_0036.png"
+   ],
+   "labels": [
+    "帧 0",
+    "帧 12",
+    "帧 24",
+    "帧 36"
+   ]
+  },
+  {
+   "type": "image",
+   "title": "4  整页预览",
+   "image": "BG02.png"
+  }
+ ]
+}
